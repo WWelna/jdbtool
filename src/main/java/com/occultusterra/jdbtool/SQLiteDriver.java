@@ -47,46 +47,47 @@ public class SQLiteDriver {
 	
 	public List<String> mapTables() throws SQLException {
 		List<String> ret = new ArrayList<>();
-		PreparedStatement stmt = this.c.prepareStatement("SELECT name FROM sqlite_master WHERE type='table'");
-		ResultSet rs = stmt.executeQuery();
-		while(rs.next())
-			ret.add(rs.getString(1));
+		try(PreparedStatement stmt = this.c.prepareStatement("SELECT name FROM sqlite_master WHERE type='table'")) {
+			ResultSet rs = stmt.executeQuery();
+			while(rs.next())
+				ret.add(rs.getString(1));
+		}
 		return ret;
 	}
 	
 	public List<JSONObject> mapSQL(String table) throws SQLException {
 		List<JSONObject> ret = new ArrayList<>();
-		PreparedStatement stmt = this.c.prepareStatement("SELECT * FROM `"+table+"`");
-		ResultSet rs = stmt.executeQuery();
-		ResultSetMetaData rsmeta = rs.getMetaData();
-		int columns = rsmeta.getColumnCount();
-		while(rs.next()) {
-			JSONObject j = new JSONObject();
-			for(int x=1; x <= columns; ++x)
-				j.put(rsmeta.getColumnName(x), rs.getObject(x));
-			ret.add(j);
+		try(PreparedStatement stmt = this.c.prepareStatement("SELECT * FROM `"+table+"`")) {
+			ResultSet rs = stmt.executeQuery();
+			ResultSetMetaData rsmeta = rs.getMetaData();
+			int columns = rsmeta.getColumnCount();
+			while(rs.next()) {
+				JSONObject j = new JSONObject();
+				for(int x=1; x <= columns; ++x)
+					j.put(rsmeta.getColumnName(x), rs.getObject(x));
+				ret.add(j);
+			}
 		}
-		stmt.close();
 		return ret;
 	}
 	
 	public void mapSQL2File(String filename, String table) throws SQLException, IOException {
 		File h = new File(filename);
-		PreparedStatement stmt = this.c.prepareStatement("SELECT * FROM `"+table+"`");
-		ResultSet rs = stmt.executeQuery();
-		ResultSetMetaData rsmeta = rs.getMetaData();
-		int columns = rsmeta.getColumnCount();
-		try(FileOutputStream f = new FileOutputStream(h, true)) {
-			while(rs.next()) {
-				JSONObject j = new JSONObject();
-				for(int x=1; x <= columns; ++x)
-					j.put(rsmeta.getColumnName(x), rs.getObject(x));
-				j.put("__DBEXPORT__", table);
-				String s = j.toString()+"\n";
-				f.write(s.getBytes());
+		try(PreparedStatement stmt = this.c.prepareStatement("SELECT * FROM `"+table+"`")) {
+			ResultSet rs = stmt.executeQuery();
+			ResultSetMetaData rsmeta = rs.getMetaData();
+			int columns = rsmeta.getColumnCount();
+			try(FileOutputStream f = new FileOutputStream(h, true)) {
+				while(rs.next()) {
+					JSONObject j = new JSONObject();
+					for(int x=1; x <= columns; ++x)
+						j.put(rsmeta.getColumnName(x), rs.getObject(x));
+					j.put("__DBEXPORT__", table);
+					String s = j.toString()+"\n";
+					f.write(s.getBytes());
+				}
 			}
 		}
-		stmt.close();
 	}
 	
 	public void SQL2File(String filename) throws SQLException, IOException {
