@@ -28,6 +28,17 @@ import net.sourceforge.argparse4j.inf.Namespace;
 
 public class jdbtool {
 	
+	static {
+		try {
+			Class.forName("org.mariadb.jdbc.Driver");
+			Class.forName("org.postgresql.Driver");
+			Class.forName("org.sqlite.JDBC");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+	}
+	
     public static void main( String[] args ) throws Exception {
     	ArgumentParser parser = ArgumentParsers.newFor("jdbtool").build().defaultHelp(true).epilog("-I Like Turtles-");
     	parser.addArgument("--out", "-o").help("Output JSON File");
